@@ -1,0 +1,728 @@
+/* =====================================================
+   ALPHA FASHION
+   Boutique e-commerce
+===================================================== */
+
+
+/* ================= PRODUITS ================= */
+
+const products = [
+
+  {
+    id: 1,
+    name: "Blazer Signature",
+    category: "Femme",
+    price: 89.90,
+    badge: "NOUVEAU"
+  },
+
+  {
+    id: 2,
+    name: "Veste Essential",
+    category: "Homme",
+    price: 99.90,
+    badge: "BEST-SELLER"
+  },
+
+  {
+    id: 3,
+    name: "Robe Satin",
+    category: "Femme",
+    price: 69.90,
+    badge: "NOUVEAU"
+  },
+
+  {
+    id: 4,
+    name: "Pull Minimal",
+    category: "Enfant",
+    price: 39.90,
+    badge: ""
+  },
+
+  {
+    id: 5,
+    name: "Chemise Premium",
+    category: "Homme",
+    price: 59.90,
+    badge: ""
+  },
+
+  {
+    id: 6,
+    name: "Jean Straight",
+    category: "Femme",
+    price: 64.90,
+    badge: ""
+  },
+
+  {
+    id: 7,
+    name: "Sweat Alpha",
+    category: "Enfant",
+    price: 34.90,
+    badge: "NOUVEAU"
+  },
+
+  {
+    id: 8,
+    name: "Pantalon Urban",
+    category: "Homme",
+    price: 69.90,
+    badge: ""
+  }
+
+];
+
+
+/* ================= VARIABLES ================= */
+
+let cart =
+  JSON.parse(
+    localStorage.getItem("alphaFashionCart")
+  ) || [];
+
+
+const productsContainer =
+  document.getElementById("products");
+
+const cartCount =
+  document.getElementById("cartCount");
+
+const cartPanel =
+  document.getElementById("cartPanel");
+
+const cartItems =
+  document.getElementById("cartItems");
+
+const cartTotal =
+  document.getElementById("cartTotal");
+
+const overlay =
+  document.getElementById("overlay");
+
+
+/* ================= PRIX ================= */
+
+function formatPrice(price) {
+
+  return new Intl.NumberFormat(
+    "fr-FR",
+    {
+      style: "currency",
+      currency: "EUR"
+    }
+  ).format(price);
+
+}
+
+
+/* ================= AFFICHAGE PRODUITS ================= */
+
+function displayProducts(category = "Tous") {
+
+  const filteredProducts =
+    category === "Tous"
+
+      ? products
+
+      : products.filter(
+          product =>
+            product.category === category
+        );
+
+
+  productsContainer.innerHTML =
+    filteredProducts.map(product => {
+
+      return `
+
+        <article class="product">
+
+          <div class="product-image">
+
+            ${
+              product.badge
+
+              ?
+
+              `<span class="badge">
+                ${product.badge}
+              </span>`
+
+              :
+
+              ""
+
+            }
+
+          </div>
+
+          <div class="product-info">
+
+            <h3>
+              ${product.name}
+            </h3>
+
+            <p>
+              ${product.category}
+            </p>
+
+            <span class="product-price">
+              ${formatPrice(product.price)}
+            </span>
+
+            <button
+              class="add-cart"
+              onclick="addToCart(${product.id})"
+            >
+              AJOUTER
+            </button>
+
+          </div>
+
+        </article>
+
+      `;
+
+    }).join("");
+
+}
+
+
+/* ================= FILTRES ================= */
+
+document
+  .querySelectorAll(".filter")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        document
+          .querySelectorAll(".filter")
+          .forEach(
+            btn =>
+              btn.classList.remove("active")
+          );
+
+        button.classList.add("active");
+
+        displayProducts(
+          button.dataset.category
+        );
+
+      }
+    );
+
+  });
+
+
+/* ================= PANIER ================= */
+
+function addToCart(productId) {
+
+  const product =
+    products.find(
+      item => item.id === productId
+    );
+
+  if (!product) return;
+
+
+  const existing =
+    cart.find(
+      item => item.id === productId
+    );
+
+
+  if (existing) {
+
+    existing.quantity += 1;
+
+  } else {
+
+    cart.push({
+
+      ...product,
+
+      quantity: 1
+
+    });
+
+  }
+
+
+  saveCart();
+
+  openCart();
+
+}
+
+
+function removeFromCart(productId) {
+
+  cart =
+    cart.filter(
+      item => item.id !== productId
+    );
+
+  saveCart();
+
+}
+
+
+function changeQuantity(
+  productId,
+  amount
+) {
+
+  const item =
+    cart.find(
+      product => product.id === productId
+    );
+
+  if (!item) return;
+
+
+  item.quantity += amount;
+
+
+  if (item.quantity <= 0) {
+
+    removeFromCart(productId);
+
+    return;
+
+  }
+
+
+  saveCart();
+
+}
+
+
+function saveCart() {
+
+  localStorage.setItem(
+    "alphaFashionCart",
+    JSON.stringify(cart)
+  );
+
+  displayCart();
+
+}
+
+
+/* ================= AFFICHAGE PANIER ================= */
+
+function displayCart() {
+
+  const quantity =
+    cart.reduce(
+      (total, product) =>
+        total + product.quantity,
+      0
+    );
+
+
+  cartCount.textContent =
+    quantity;
+
+
+  if (cart.length === 0) {
+
+    cartItems.innerHTML = `
+
+      <div class="empty-cart">
+
+        Votre panier est vide.
+
+        <br><br>
+
+        Découvrez notre collection
+        et ajoutez vos articles favoris.
+
+      </div>
+
+    `;
+
+    cartTotal.textContent =
+      formatPrice(0);
+
+    return;
+
+  }
+
+
+  cartItems.innerHTML =
+    cart.map(product => {
+
+      return `
+
+        <div class="cart-product">
+
+          <div class="cart-product-image"></div>
+
+          <div>
+
+            <h4>
+              ${product.name}
+            </h4>
+
+            <p>
+              ${product.category}
+              ·
+              ${formatPrice(product.price)}
+            </p>
+
+            <button
+              class="remove-product"
+              onclick="removeFromCart(${product.id})"
+            >
+              Supprimer
+            </button>
+
+            <div style="margin-top:8px">
+
+              <button
+                onclick="changeQuantity(${product.id}, -1)"
+              >
+                −
+              </button>
+
+              <strong style="margin:0 8px">
+                ${product.quantity}
+              </strong>
+
+              <button
+                onclick="changeQuantity(${product.id}, 1)"
+              >
+                +
+              </button>
+
+            </div>
+
+          </div>
+
+          <strong>
+            ${formatPrice(
+              product.price *
+              product.quantity
+            )}
+          </strong>
+
+        </div>
+
+      `;
+
+    }).join("");
+
+
+  const total =
+    cart.reduce(
+      (sum, product) =>
+        sum +
+        product.price *
+        product.quantity,
+      0
+    );
+
+
+  cartTotal.textContent =
+    formatPrice(total);
+
+}
+
+
+/* ================= OUVERTURE PANIER ================= */
+
+function openCart() {
+
+  cartPanel.classList.add("active");
+
+  overlay.classList.add("active");
+
+}
+
+
+function closeCart() {
+
+  cartPanel.classList.remove("active");
+
+  overlay.classList.remove("active");
+
+}
+
+
+document
+  .getElementById("cartButton")
+  .addEventListener(
+    "click",
+    openCart
+  );
+
+
+document
+  .getElementById("closeCart")
+  .addEventListener(
+    "click",
+    closeCart
+  );
+
+
+overlay.addEventListener(
+  "click",
+  closeCart
+);
+
+
+/* ================= RECHERCHE ================= */
+
+const searchModal =
+  document.getElementById("searchModal");
+
+const searchInput =
+  document.getElementById("searchInput");
+
+const searchResults =
+  document.getElementById("searchResults");
+
+
+document
+  .getElementById("searchButton")
+  .addEventListener(
+    "click",
+    () => {
+
+      searchModal.classList.add("active");
+
+      setTimeout(
+        () =>
+          searchInput.focus(),
+        100
+      );
+
+    }
+  );
+
+
+document
+  .getElementById("closeSearch")
+  .addEventListener(
+    "click",
+    () =>
+      searchModal.classList.remove(
+        "active"
+      )
+  );
+
+
+searchInput.addEventListener(
+  "input",
+  event => {
+
+    const query =
+      event.target.value
+        .toLowerCase()
+        .trim();
+
+
+    if (!query) {
+
+      searchResults.innerHTML = "";
+
+      return;
+
+    }
+
+
+    const results =
+      products.filter(
+        product =>
+          `${product.name} ${product.category}`
+            .toLowerCase()
+            .includes(query)
+      );
+
+
+    if (!results.length) {
+
+      searchResults.innerHTML = `
+
+        <p class="search-result">
+          Aucun produit trouvé.
+        </p>
+
+      `;
+
+      return;
+
+    }
+
+
+    searchResults.innerHTML =
+      results.map(product => `
+
+        <p class="search-result">
+
+          <strong>
+            ${product.name}
+          </strong>
+
+          — ${formatPrice(product.price)}
+
+        </p>
+
+      `).join("");
+
+  });
+
+
+/* ================= COMPTE ================= */
+
+const accountModal =
+  document.getElementById("accountModal");
+
+
+document
+  .getElementById("accountButton")
+  .addEventListener(
+    "click",
+    () =>
+      accountModal.classList.add(
+        "active"
+      )
+  );
+
+
+document
+  .getElementById("closeAccount")
+  .addEventListener(
+    "click",
+    () =>
+      accountModal.classList.remove(
+        "active"
+      )
+  );
+
+
+accountModal.addEventListener(
+  "click",
+  event => {
+
+    if (
+      event.target === accountModal
+    ) {
+
+      accountModal.classList.remove(
+        "active"
+      );
+
+    }
+
+  }
+);
+
+
+/* ================= MENU MOBILE ================= */
+
+const mobileNavigation =
+  document.getElementById(
+    "mobileNavigation"
+  );
+
+
+document
+  .getElementById("menuButton")
+  .addEventListener(
+    "click",
+    () =>
+      mobileNavigation.classList.toggle(
+        "active"
+      )
+  );
+
+
+mobileNavigation
+  .querySelectorAll("a")
+  .forEach(link => {
+
+    link.addEventListener(
+      "click",
+      () =>
+        mobileNavigation.classList.remove(
+          "active"
+        )
+    );
+
+  });
+
+
+/* ================= NEWSLETTER ================= */
+
+document
+  .getElementById("newsletterForm")
+  .addEventListener(
+    "submit",
+    event => {
+
+      event.preventDefault();
+
+      const email =
+        document.getElementById(
+          "newsletterEmail"
+        ).value;
+
+      const message =
+        document.getElementById(
+          "newsletterMessage"
+        );
+
+
+      if (!email) return;
+
+
+      message.textContent =
+        "Merci ! Votre inscription a bien été prise en compte.";
+
+
+      event.target.reset();
+
+    }
+  );
+
+
+/* ================= COMMANDE ================= */
+
+document
+  .getElementById("checkoutButton")
+  .addEventListener(
+    "click",
+    () => {
+
+      if (cart.length === 0) {
+
+        alert(
+          "Votre panier est vide."
+        );
+
+        return;
+
+      }
+
+
+      alert(
+        "La page de paiement sera connectée dans la prochaine étape."
+      );
+
+    }
+  );
+
+
+/* ================= INITIALISATION ================= */
+
+displayProducts();
+
+displayCart();
